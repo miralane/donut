@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Donut, a picture book by Mira Lane</title>
+<meta name="description" content="Donut: a meditation on the illusion of separation. A picture book in watercolor by Mira Lane, read here page by page.">
+<meta property="og:title" content="Donut, a picture book by Mira Lane">
+<meta property="og:description" content="A meditation on the illusion of separation. Read the whole book here.">
+<meta property="og:type" content="book">
+<meta property="og:image" content="https://miralane.github.io/donut/share.jpg">
+<meta property="og:url" content="https://miralane.github.io/donut/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,600&display=swap">
+<style>[hidden]{display:none!important}</style>
+<style>
+/* Layout: the book plays itself. One page fills the screen and fades to the next; a small
+   player at the bottom begins, pauses, steps and restarts. Nothing scrolls.
+   Wide screens show whole spreads; narrow screens show the left page, then the right.
+   One deliberate look: the paintings set every color, the page keeps the book's paper and ink. */
+:root{
+  --paper:#fdfbf8; --ink:#231f20; --ink-soft:#6f6768; --rule:#e6dfda; --rose:#bf223c;
+  --serif:"EB Garamond","Adobe Garamond Pro",Garamond,"Hoefler Text",Georgia,serif;
+  color-scheme:light;
+}
+html,body{height:100%;overflow:hidden;background:var(--paper)}
+body{margin:0;color:var(--ink);font-family:var(--serif);font-size:18px;line-height:1.5;-webkit-font-smoothing:antialiased}
+#book{position:fixed;inset:0;overflow:hidden;background:var(--paper);touch-action:manipulation}
+.pg{position:absolute;inset:0;overflow:hidden;background:var(--bg);opacity:0;visibility:hidden;transition:opacity 1.1s ease,visibility 0s 1.1s}
+.pg.on{opacity:1;visibility:visible;transition:opacity 1.1s ease,visibility 0s;z-index:1}
+.art{position:absolute}
+.art img{display:block;width:100%;height:100%;max-width:none;user-select:none;-webkit-user-drag:none}
+.pg.cover{background:#ece6df}
+.pg.cover .art{background:#fff;overflow:hidden;outline:1px solid rgba(35,31,32,.14);box-shadow:0 1px 2px rgba(35,31,32,.10),0 18px 44px -12px rgba(35,31,32,.28)}
+.art.half{overflow:hidden;-webkit-mask-image:linear-gradient(transparent 0,#000 7%,#000 93%,transparent 100%);mask-image:linear-gradient(transparent 0,#000 7%,#000 93%,transparent 100%)}
+.back{position:absolute;inset:0;overflow:hidden}
+.back img{position:absolute;top:0;height:100%;max-width:none;filter:blur(28px);transform:scale(1.12);opacity:.9}
+.blocks{position:absolute}
+.blk{position:absolute;margin:0;transform:translate(-50%,-50%);white-space:pre;text-align:center;line-height:1.32;color:var(--ink);opacity:0;transition:opacity .9s ease}
+.half .blk{white-space:pre-wrap;max-width:calc(100vw - 28px)}
+.pg.on .blk{opacity:1;transition:opacity .9s ease .5s}
+.blk.l{color:#fff}
+.blk.fI{font-style:italic}
+.blk.fS{font-style:italic;font-weight:600}
+.blk.d2{font-style:italic}
+.blk.d3{font-style:italic;font-size:1.15em}
+.blk.d4{font-style:italic;font-size:1.3em}
+.blk.d5{font-style:italic;font-size:1.15em}
+.sub{position:absolute;left:0;right:0;bottom:calc(118px + env(safe-area-inset-bottom,0px));text-align:center;font-style:italic;font-size:16px;color:var(--ink-soft);padding:0 20px}
+#ripples{position:fixed;inset:0;width:100%;height:100%;z-index:3;pointer-events:none}
+/* end pages */
+.pg.end{display:flex;overflow-y:auto;background:var(--paper);
+  padding:calc(28px + env(safe-area-inset-top,0px)) max(24px,env(safe-area-inset-right,0px)) calc(120px + env(safe-area-inset-bottom,0px)) max(24px,env(safe-area-inset-left,0px));box-sizing:border-box}
+.pg.end>*{margin:auto;max-width:34em;text-align:center}
+.note{display:flex;flex-direction:column;gap:1.1em;font-size:clamp(17px,2.4vh,20px)}
+.note h2{font-style:italic;font-weight:600;font-size:22px;margin:0}
+.note p{margin:0;text-wrap:balance}
+.joinwrap{display:flex;flex-direction:column;gap:5vh}
+.join{display:flex;flex-direction:column;gap:16px;align-items:center}
+.join h2{font-weight:400;font-style:italic;font-size:clamp(30px,6vw,44px);line-height:1.1;margin:0;text-wrap:balance}
+.join p{margin:0;font-size:19px;max-width:28em;text-wrap:balance}
+.btns{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:8px}
+.btn{font:500 18px var(--serif);letter-spacing:.02em;padding:13px 26px;border-radius:999px;text-decoration:none;border:1px solid var(--rose);color:var(--rose);background:transparent}
+.btn.main{background:var(--rose);color:#fff}
+.soon{font-style:italic;color:var(--ink-soft)}
+.credit{font-size:15px;color:var(--ink-soft);display:flex;flex-direction:column;gap:4px;align-items:center}
+.again{font:italic 16px var(--serif);color:var(--ink);background:none;border:0;text-decoration:underline;padding:10px 14px;cursor:pointer}
+.mini{width:54px;height:54px;border-radius:50%;margin:0 auto;border:17px solid var(--rose);box-sizing:border-box;opacity:.9}
+/* player */
+#player{position:fixed;z-index:4;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);display:flex;align-items:center;gap:4px;
+  padding:6px 10px;border-radius:999px;color:var(--ink);background:rgba(253,251,248,.72);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+  transition:color .5s,background-color .5s,opacity .6s}
+#player.light{color:#fff;background:rgba(20,18,18,.5)}
+#player.quiet{opacity:.55}
+#player.quiet:hover,#player.quiet:focus-within{opacity:1}
+#player button{width:46px;height:46px;border-radius:50%;border:0;background:transparent;color:inherit;cursor:pointer;display:grid;place-items:center;padding:0}
+#player button:disabled{opacity:.3;cursor:default}
+#player svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+#play{position:relative;width:60px!important;height:60px!important}
+#play .ring{position:absolute;inset:3px;width:54px;height:54px;transform:rotate(-90deg)}
+#play .ring circle{fill:none;stroke-width:5}
+#play .ring .t{stroke:currentColor;opacity:.18}
+#play .ring .p{stroke:var(--rose)}
+#player.light #play .ring .p{stroke:#fff}
+#play svg.i{fill:currentColor;stroke:none;width:18px;height:18px}
+#play.begin{width:auto!important;padding:0 20px 0 8px!important;border-radius:999px;display:flex!important;gap:6px;font:italic 19px var(--serif)}
+#play.begin .ring{position:static;flex:none}
+#play.begin svg.i{position:absolute;left:26px}
+#play .lbl{display:none}
+#play.begin .lbl{display:inline}
+button:focus-visible,a:focus-visible{outline:2px solid var(--rose);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.pg,.pg.on,.blk,.pg.on .blk{transition:none}}
+</style>
+</head>
+<body>
+
+
+<main id="book" aria-live="polite"></main>
+<canvas id="ripples" aria-hidden="true"></canvas>
+<div id="player" role="group" aria-label="Book player">
+  <button id="restart" type="button" aria-label="Start again from the beginning" title="Start again"><svg class="i" viewBox="0 0 20 20" aria-hidden="true"><path d="M4.5 10a5.5 5.5 0 1 0 1.8-4.1"/><path d="M4 3.5v3.2h3.2"/></svg></button>
+  <button id="prev" type="button" aria-label="Previous page" title="Previous page"><svg class="i" viewBox="0 0 20 20" aria-hidden="true"><path d="M12.5 4.5L7 10l5.5 5.5"/></svg></button>
+  <button id="play" type="button" aria-label="Begin" title="Play or pause">
+    <svg class="ring" viewBox="0 0 54 54" aria-hidden="true"><circle class="t" cx="27" cy="27" r="24"/><circle class="p" cx="27" cy="27" r="24" stroke-dasharray="150.8" stroke-dashoffset="150.8"/></svg>
+    <svg class="i" viewBox="0 0 20 20" aria-hidden="true"><path id="glyph" d="M6.5 4l10 6-10 6z"/></svg>
+    <span class="lbl">Begin</span>
+  </button>
+  <button id="next" type="button" aria-label="Next page" title="Next page"><svg class="i" viewBox="0 0 20 20" aria-hidden="true"><path d="M7.5 4.5L13 10l-5.5 5.5"/></svg></button>
+</div>
+<div hidden id="store">
+
+  <div class="col">
+    <section class="note">
+      <h2>Author’s Note</h2>
+      <p>A donut, like ourselves, is a torus: a form defined by the space it encircles.</p>
+      <p>Its body and its center are not two separate things.</p>
+      <p>Emptiness and fullness, arriving from opposite directions: the Buddhist Heart Sutra and the Hindu Upanishads.</p>
+      <p>This is an invitation to notice, through a little book about a donut that is really about everything.</p>
+    </section>
+    <section class="join" id="join">
+      <div class="mini" aria-hidden="true"></div>
+      <h2>Hold it in your hands.</h2>
+      <p><em>Donut</em> is becoming a book. Leave your email and you will hear the day it is ready. You can also ask for a print of any painting.</p>
+      <div class="btns" id="btns"></div>
+    </section>
+    <div class="credit">
+      <span><em>Donut: a meditation on the illusion of separation</em></span>
+      <span>Words and watercolors by Mira Lane</span>
+      <button type="button" class="again" id="again">Read it again</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+// ---- set these two links when the sign-up form is ready ----
+const SIGNUP_URL = "https://www.miralane.com/donut-list";   // "notify me when the book is available"
+const PRINT_URL  = "";   // "I would like a print"
+
+const DATA = [{"id":0,"blank":[0,0],"ar":1,"bg":"#ffffff","acc":"#bf223c","b":[{"t":"Donut","x":78.8,"y":25.8,"l":0,"f":"S","s":48.0},{"t":"Mira Lane","x":78.8,"y":65.5,"l":0,"f":"R","s":20.0}]},{"id":3,"blank":[1,0],"ar":2,"bg":"#ffffff","acc":"#cdcbcb","b":[{"t":"For Aidan & Uma,\nthe world came close when you\narrived.","x":75.2,"y":42.9,"l":0,"f":"R","s":20.0}]},{"id":4,"blank":[0,0],"ar":2,"bg":"#f8f2f6","acc":"#ede1e6","b":[{"t":"Form is emptiness,\nemptiness is form.","x":75.2,"y":42.5,"l":0,"f":"I","s":20.0},{"t":"~ Heart Sutra","x":75.0,"y":50.8,"l":0,"f":"R","s":20.0}]},{"id":5,"blank":[1,0],"ar":2,"bg":"#ffffff","acc":"#ba6a8d","b":[{"t":"I am a donut.","x":25.0,"y":40.8,"l":0,"f":"R","s":20.0},{"t":"I live on a small sunlit\nworld.","x":25.2,"y":49.1,"l":0,"f":"R","s":20.0}],"pan":[0.1,1]},{"id":6,"blank":[0,0],"ar":2,"bg":"#f3e0eb","acc":"#c48ab1","b":[{"t":"When the day begins,\nI lie very still.","x":31.0,"y":21.6,"l":0,"f":"R","s":20.0},{"t":"I like to watch the light arrive.","x":75.0,"y":20.0,"l":0,"f":"R","s":20.0}]},{"id":7,"blank":[0,0],"ar":2,"bg":"#6e879e","acc":"#263c65","b":[{"t":"I like the smell of cocoa and sugar in the rain.","x":72.1,"y":88.7,"l":0,"f":"R","s":20.0}]},{"id":8,"blank":[0,0],"ar":2,"bg":"#e5c9e0","acc":"#af206b","b":[{"t":"Sometimes, I pretend I am a moon.","x":26.7,"y":20.7,"l":0,"f":"R","s":20.0},{"t":"Sometimes, I pretend I am a river.","x":26.7,"y":27.4,"l":0,"f":"R","s":20.0},{"t":"Sometimes, I pretend I am a song.","x":26.7,"y":34.1,"l":0,"f":"R","s":20.0},{"t":"And I laugh just thinking about it all.","x":77.2,"y":63.4,"l":1,"f":"R","s":20.0}]},{"id":9,"blank":[1,0],"ar":2,"bg":"#ffffff","acc":"#fdfcfc","b":[{"t":"I wonder.","x":25.2,"y":35.3,"l":0,"f":"R","s":20.0},{"t":"What am I, really?","x":25.0,"y":42.0,"l":0,"f":"R","s":20.0},{"t":"What is the space in the middle of me?","x":75.4,"y":35.3,"l":0,"f":"R","s":20.0},{"t":"Is it part of me?","x":75.4,"y":42.0,"l":0,"f":"R","s":20.0},{"t":"Or is it where I am not?","x":75.4,"y":48.7,"l":0,"f":"R","s":20.0}]},{"id":10,"blank":[0,0],"ar":2,"bg":"#753c6b","acc":"#63597d","b":[{"t":"I am a donut.","x":25.0,"y":36.2,"l":1,"f":"R","s":20.0}]},{"id":11,"blank":[0,0],"ar":2,"bg":"#d9bfda","acc":"#b63c72","b":[{"t":"I am gentle and soft.","x":37.8,"y":11.7,"l":0,"f":"R","s":20.0}]},{"id":12,"blank":[0,0],"ar":2,"bg":"#f1f1d3","acc":"#f7e08a","b":[{"t":"When sun comes through me,","x":34.9,"y":36.2,"l":0,"f":"R","s":20.0},{"t":"I feel bright.","x":34.7,"y":42.9,"l":0,"f":"R","s":20.0}]},{"id":13,"blank":[0,0],"ar":2,"bg":"#ffffff","acc":"#86a1ca","b":[{"t":"When air moves through me, I feel cool.","x":15.3,"y":48.2,"l":0,"f":"R","s":20.0}]},{"id":14,"blank":[0,0],"ar":2,"bg":"#ffffff","acc":"#2b5da6","b":[{"t":"The outside air goes all the way in and out of me.","x":27.3,"y":31.5,"l":0,"f":"R","s":20.0}]},{"id":15,"blank":[0,1],"ar":2,"bg":"#ffffff","acc":"#978376","b":[{"t":"My breath is a circle.","x":73.3,"y":16.7,"l":0,"f":"R","s":20.0},{"t":"I notice the turn at the top.","x":73.4,"y":33.4,"l":0,"f":"R","s":20.0},{"t":"And the turn at the bottom.","x":73.3,"y":76.7,"l":0,"f":"R","s":20.0}],"fx":"breathe","o":[27,55],"pan":[0,0.3]},{"id":16,"blank":[0,0],"ar":2,"bg":"#eeebe9","acc":"#bcb5b2","b":[{"t":"Sometimes voices pass through me.","x":76.6,"y":29.0,"l":0,"f":"R","s":20.0},{"t":"Sometimes quiet passes through me too.","x":82.4,"y":45.5,"l":0,"f":"R","s":20.0}]},{"id":17,"blank":[0,0],"ar":2,"bg":"#ced3d6","acc":"#6e8091","b":[{"t":"I am a donut.","x":76.2,"y":66.3,"l":0,"f":"R","s":20.0},{"t":"I like when","x":76.4,"y":76.3,"l":0,"f":"R","s":20.0},{"t":"the world comes close.","x":76.2,"y":83.0,"l":0,"f":"R","s":20.0}]},{"id":18,"blank":[0,0],"ar":2,"bg":"#f0f1f4","acc":"#868d8b","b":[{"t":"When something enters me,","x":27.7,"y":19.4,"l":0,"f":"R","s":20.0},{"t":"I notice it.","x":27.5,"y":26.1,"l":0,"f":"R","s":20.0},{"t":"When something leaves me,","x":85.5,"y":44.2,"l":0,"f":"R","s":20.0},{"t":"I notice that too.","x":85.4,"y":50.9,"l":0,"f":"R","s":20.0}]},{"id":19,"blank":[0,0],"ar":2,"bg":"#ffffff","acc":"#48574c","b":[{"t":"Nothing stays forever.","x":20.8,"y":23.7,"l":0,"f":"R","s":20.0},{"t":"But everything touches me for a\nmoment.","x":20.9,"y":35.4,"l":0,"f":"R","s":20.0}]},{"id":20,"blank":[0,0],"ar":2,"bg":"#ccbaa8","acc":"#bea38e","b":[]},{"id":21,"blank":[0,0],"ar":2,"bg":"#ffffff","acc":"#585e6a","b":[{"t":"I am a donut.","x":78.9,"y":24.5,"l":0,"f":"R","s":20.0},{"t":"I am good at letting things pass through.","x":78.9,"y":72.5,"l":0,"f":"R","s":20.0}]},{"id":22,"blank":[0,0],"ar":2,"bg":"#ffffff","acc":"#2d3457","b":[{"t":"When sharp sounds come,\nI feel small.","x":17.5,"y":32.1,"l":0,"f":"R","s":20.0},{"t":"When sweet smells come,\nI feel happy.","x":89.7,"y":38.4,"l":0,"f":"R","s":20.0},{"t":"When gentle hands come,\nI feel safe.","x":89.7,"y":48.4,"l":0,"f":"R","s":20.0}]},{"id":23,"blank":[0,1],"ar":2,"bg":"#ffffff","acc":"#475364","b":[{"t":"I like feeling what the world is like.","x":13.5,"y":20.9,"l":0,"f":"R","s":20.0},{"t":"I am not just where things go.","x":73.9,"y":31.7,"l":0,"f":"R","s":20.0},{"t":"I am how they go.","x":73.7,"y":38.4,"l":0,"f":"R","s":20.0}]},{"id":24,"blank":[0,0],"ar":2,"bg":"#5d8abc","acc":"#2772b8","b":[{"t":"Sometimes another comes close.","x":34.8,"y":12.5,"l":0,"f":"R","s":20.0},{"t":"I feel them feeling.","x":34.9,"y":19.1,"l":0,"f":"R","s":20.0},{"t":"For a moment, we are the same.","x":34.8,"y":25.8,"l":0,"f":"R","s":20.0}]},{"id":25,"blank":[0,0],"ar":2,"bg":"#87bae1","acc":"#3976b7","b":[]},{"id":26,"blank":[0,0],"ar":2,"bg":"#060405","acc":"#060404","b":[{"t":"When I become very still,","x":25.0,"y":36.2,"l":1,"f":"R","s":20.0},{"t":"the ripples inside me settle.","x":25.0,"y":42.9,"l":1,"f":"R","s":20.0},{"t":"My middle becomes clear.","x":67.2,"y":42.8,"l":1,"f":"R","s":20.0}],"fx":"still","pan":[0.1,1]},{"id":27,"blank":[0,0],"ar":2,"bg":"#a7a5a1","acc":"#e4ded3","b":[{"t":"And for a moment,","x":12.2,"y":36.2,"l":0,"f":"R","s":20.0},{"t":"I am a silent mirror.","x":12.0,"y":42.9,"l":0,"f":"R","s":20.0}],"fx":"still"},{"id":28,"blank":[0,0],"ar":2,"bg":"#f4f4f4","acc":"#c9c8c9","b":[{"t":"As time goes by","x":12.9,"y":40.0,"l":0,"f":"R","s":20.0},{"t":"I notice something curious.","x":77.6,"y":32.5,"l":0,"f":"R","s":20.0}]},{"id":29,"blank":[0,0],"ar":2,"bg":"#959595","acc":"#878586","b":[{"t":"The air that goes through\nme keeps me alive.","x":33.4,"y":22.3,"l":0,"f":"R","s":20.0},{"t":"The things that pass through me\nchange me.","x":82.3,"y":53.7,"l":1,"f":"R","s":20.0}]},{"id":30,"blank":[0,0],"ar":2,"bg":"#eeeeee","acc":"#dedcdd","b":[{"t":"Sometimes I no longer know","x":15.7,"y":16.0,"l":0,"f":"R","s":20.0},{"t":"where I begin","x":15.7,"y":22.6,"l":0,"f":"R","s":20.0},{"t":"or where I end.","x":15.7,"y":29.3,"l":0,"f":"R","s":20.0}]},{"id":31,"blank":[1,0],"ar":2,"bg":"#ffffff","acc":"#fffdfe","b":[{"t":"I am not time.","x":25.2,"y":40.5,"l":0,"f":"R","s":20.0},{"t":"I am where time happens.","x":25.0,"y":47.1,"l":0,"f":"R","s":20.0}]},{"id":32,"blank":[0,0],"ar":2,"bg":"#ffffff","acc":"#dddbdc","b":[{"t":"One day the hole in the middle of me","x":36.1,"y":43.1,"l":0,"f":"R","s":20.0},{"t":"will open into everything.","x":36.0,"y":49.8,"l":0,"f":"R","s":20.0}],"fx":"open"},{"id":33,"blank":[0,0],"ar":2,"bg":"#ffffff","acc":"#fffdfe","b":[{"t":"This does not frighten me.","x":26.2,"y":38.2,"l":0,"f":"R","s":20.0},{"t":"I have been practicing.","x":76.0,"y":15.0,"l":0,"f":"R","s":20.0},{"t":"Every breath that leaves me has been a small\ngoodbye.","x":77.8,"y":66.1,"l":0,"f":"R","s":20.0}]},{"id":34,"blank":[0,0],"ar":2,"bg":"#6dadd7","acc":"#2873ae","b":[{"t":"I am not just sitting here.","x":16.7,"y":10.4,"l":1,"f":"R","s":20.0},{"t":"I am breathing.","x":33.7,"y":10.4,"l":1,"f":"R","s":20.0},{"t":"I am listening.","x":33.7,"y":17.1,"l":1,"f":"R","s":20.0},{"t":"I am feeling.","x":33.7,"y":23.8,"l":1,"f":"R","s":20.0},{"t":"I am changing.","x":33.7,"y":30.4,"l":1,"f":"R","s":20.0},{"t":"I am becoming.","x":33.7,"y":37.1,"l":1,"f":"R","s":20.0}]},{"id":35,"blank":[0,0],"ar":2,"bg":"#5c7969","acc":"#2b75a6","b":[]},{"id":36,"blank":[0,0],"ar":2,"bg":"#6f9097","acc":"#24518a","b":[]},{"id":37,"blank":[0,0],"ar":2,"bg":"#feede7","acc":"#e08882","b":[{"t":"I am a soft living ring of skin","x":76.5,"y":29.7,"l":0,"f":"R","s":20.0},{"t":"and breath and thought,","x":76.5,"y":36.4,"l":0,"f":"R","s":20.0},{"t":"with a warm open place inside","x":76.5,"y":43.1,"l":0,"f":"R","s":20.0},{"t":"where the whole world moves through.","x":76.4,"y":49.7,"l":0,"f":"R","s":20.0}]},{"id":38,"blank":[0,0],"ar":2,"bg":"#0b100b","acc":"#221e17","b":[{"t":"I am a donut experiencing the universe.","x":25.1,"y":28.2,"l":1,"f":"R","s":20.0},{"t":"And for a little while,","x":25.2,"y":38.2,"l":1,"f":"R","s":20.0},{"t":"the universe is experiencing me.","x":25.1,"y":44.9,"l":1,"f":"R","s":20.0}],"fx":"zoom","o":[76,50],"pan":[0.25,1]},{"id":39,"blank":[0,0],"ar":2,"bg":"#000000","acc":"#060506","b":[{"t":"It is here.","x":75.0,"y":42.0,"l":1,"f":"R","s":20.0},{"t":"I am that.","x":75.0,"y":48.6,"l":1,"f":"R","s":20.0}]},{"id":41,"blank":[0,0],"ar":1,"bg":"#ffffff","acc":"#bf223c","b":[{"t":"A meditation on the\nillusion of separation.","x":77.6,"y":37.3,"l":0,"f":"S","s":20.0}]}];
+const $ = (t, c) => { const e = document.createElement(t); if (c) e.className = c; return e; };
+const lum = h => { const n = parseInt(h.slice(1), 16); return .299 * (n >> 16) + .587 * (n >> 8 & 255) + .114 * (n & 255); };
+const ease = t => t * t * (3 - 2 * t), clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const src = d => 'img/s' + String(d.id).padStart(2, '0') + '.jpg';
+
+const btns = document.getElementById('btns');
+if (SIGNUP_URL || PRINT_URL) {
+  if (SIGNUP_URL) { const a = $('a', 'btn main'); a.href = SIGNUP_URL; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'Tell me when it’s ready'; btns.append(a); }
+  if (PRINT_URL) { const a = $('a', 'btn'); a.href = PRINT_URL; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'I’d like a print'; btns.append(a); }
+} else { const s = $('span', 'soon'); s.textContent = 'Sign-ups open soon.'; btns.append(s); }
+// the two closing pages, kept as real nodes so they survive a rebuild
+const noteEl = document.querySelector('.note'), joinWrap = $('div', 'joinwrap');
+joinWrap.append(document.querySelector('.join'), document.querySelector('.credit'));
+
+const book = document.getElementById('book'), player = document.getElementById('player');
+const playBtn = document.getElementById('play'), glyph = document.getElementById('glyph'), ring = playBtn.querySelector('.p');
+const prevBtn = document.getElementById('prev'), nextBtn = document.getElementById('next'), restartBtn = document.getElementById('restart');
+const PLAY = 'M6.5 4l10 6-10 6z', PAUSE = 'M5.5 4h3v12h-3zM11.5 4h3v12h-3z';
+let P = [], mode = null, active = 0, playing = false, started = false, timer = 0, due = 0, left = 0, vw = 0, vh = 0;
+
+// Wide screens: one spread per screen. Narrow screens: one page per screen, left then right.
+function build(m) {
+  book.innerHTML = ''; let donutN = 0; const items = [];
+  for (const d of DATA) {
+    if (m !== 'page' || d.ar !== 2) { items.push({ ...d, half: -1 }); continue; }
+    for (const h of [0, 1]) {
+      const b = d.b.filter(x => (x.x >= 50) === (h === 1)).map(x => ({ ...x, x: (x.x - 50 * h) * 2 }));
+      if (!b.length && d.blank && d.blank[h]) continue;
+      items.push({ ...d, b, half: h, ar: 1 });
+    }
+  }
+  // the cover carries the subtitle under the title, in the book's ink
+  items[0] = { ...items[0], b: [items[0].b[0], { t: 'a meditation on the\nillusion of separation', x: items[0].b[0].x, y: 39, l: 0, f: 'I', s: 22 }, ...items[0].b.slice(1)] };
+  P = items.map((d, i) => {
+    const el = $('section', 'pg' + (d.half >= 0 ? ' half' : d.ar === 1 ? ' cover' : '')); el.style.setProperty('--bg', d.bg);
+    let back = null;
+    if (d.half >= 0) { back = $('img'); back.alt = ''; const bw = $('div', 'back'); bw.append(back); el.append(bw); }
+    const art = $('div', 'art'), img = $('img'); img.alt = ''; img.decoding = 'async'; art.append(img);
+    if (d.half >= 0) { art.classList.add('half'); img.style.width = '200%'; img.style.marginLeft = d.half ? '-100%' : '0'; }
+    const blocks = $('div', 'blocks');
+    const blks = d.b.map(b => {
+      const e = $('p', 'blk f' + b.f + (b.l ? ' l' : '')); e.textContent = b.t;
+      if (/^I am a donut/.test(b.t)) e.classList.add('d' + (++donutN));
+      e.style.left = b.x + '%'; e.style.top = b.y + '%'; blocks.append(e); return e;
+    });
+    el.append(art, blocks);
+    book.append(el);
+    const nLight = d.b.filter(b => b.l).length, words = d.b.reduce((n, b) => n + b.t.split(/\s+/).length, 0);
+    // time on the page: a base, plus reading time for its words
+    const ms = i === 0 ? 2000 : words ? Math.max(3000, 1800 + 300 * words) : 2500;
+    return { d, el, art, img, back, blocks, blks, ms, key: d.id + ':' + d.half, light: d.b.length ? nLight * 2 > d.b.length : lum(d.bg) < 110 };
+  });
+  for (const [node, key, ms] of [[noteEl, 'note', 10000], [joinWrap, 'join', 0]]) {
+    const el = $('section', 'pg end'), pg = { end: true, el, blks: [], ms, key, light: false, d: { acc: '#bf223c' } };
+    el.append(node);
+    // the Author's Note comes before the back cover, as in the book; the sign-up comes last
+    const at = key === 'note' ? P.findIndex(p => p.d.id === 41) : -1;
+    if (at > 0) { book.insertBefore(el, P[at].el); P.splice(at, 0, pg); } else { book.append(el); P.push(pg); }
+  }
+}
+function layout() {
+  vw = document.documentElement.clientWidth; vh = window.innerHeight;
+  const m = vw / vh >= 1.45 ? 'spread' : 'page';
+  if (m !== mode) { const keep = P[active] && P[active].key.split(':')[0]; mode = m; build(m);
+    const k = keep == null ? 0 : P.findIndex(p => p.key.split(':')[0] === keep); show(Math.max(0, k), true); }
+  for (const p of P) { if (p.end) continue;
+    const { d } = p, sq = d.ar === 1; let aw, ah;
+    if (d.half >= 0) aw = ah = Math.min(vh, vw * 1.35); else if (sq) aw = ah = Math.min(vw * .92, vh - 132); else { aw = Math.max(vw, Math.min(2 * vh, vw * 1.08)); ah = aw / 2; }
+    const box = { width: aw + 'px', height: ah + 'px', left: (vw - aw) / 2 + 'px', top: (d.half < 0 && sq ? (vh - 88 - ah) / 2 : (vh - ah) / 2) + 'px' };
+    Object.assign(p.art.style, box); Object.assign(p.blocks.style, box);
+    if (p.back) { p.back.style.width = 2 * vh + 'px'; p.back.style.left = vw / 2 - (d.half ? 1.5 : .5) * vh + 'px'; }
+    p.blks.forEach((e, k) => { e.style.fontSize = Math.max(d.half >= 0 ? 17 : 15, aw * (sq ? 2 : 1) * 0.0139 * 1.1 * d.b[k].s / 20) + 'px'; e.style.marginLeft = '0px'; });
+  }
+  for (const p of P) for (const e of p.blks) { const r = e.getBoundingClientRect(), pad = 14;
+    if (r.left < pad) e.style.marginLeft = (pad - r.left) + 'px'; else if (r.right > vw - pad) e.style.marginLeft = (vw - pad - r.right) + 'px'; }
+  const k = Math.min(devicePixelRatio || 1, 2); rc.width = vw * k; rc.height = vh * k; rx.setTransform(k, 0, 0, k, 0, 0);
+}
+function load(p) { if (p && !p.end && !p.img.src) { p.img.src = src(p.d); if (p.back) p.back.src = src(p.d); } }
+
+// ---- player ----
+function show(i, silent) {
+  i = clamp(i, 0, P.length - 1);
+  P.forEach((p, k) => { p.el.classList.toggle('on', k === i); p.el.setAttribute('aria-hidden', k === i ? 'false' : 'true'); });
+  active = i; load(P[i]); load(P[i + 1]); load(P[i + 2]);
+  try { sessionStorage.setItem('donut-page', P[i].key); } catch (e) {}
+  clearTimeout(timer); left = P[i].ms;
+  if (i === P.length - 1) playing = false;
+  if (playing) arm();
+  if (!silent) ui();
+}
+function arm() { clearTimeout(timer); due = performance.now() + left; timer = setTimeout(() => show(active + 1), left); }
+function play() {
+  if (active === P.length - 1) { started = true; playing = true; show(0); return; }
+  started = true; playing = true; arm(); ui();
+}
+function pause() { if (!playing) return; playing = false; clearTimeout(timer); left = Math.max(400, due - performance.now()); ui(); }
+function step(dir) { started = true; show(active + dir); }
+function restart() { started = true; playing = true; show(0); }
+function ui() {
+  const p = P[active], last = active === P.length - 1, begin = !started && active === 0;
+  player.classList.toggle('light', p.light); player.classList.toggle('quiet', playing);
+  playBtn.classList.toggle('begin', begin);
+  glyph.setAttribute('d', playing ? PAUSE : PLAY);
+  playBtn.setAttribute('aria-label', playing ? 'Pause' : begin ? 'Begin' : last ? 'Play again from the beginning' : 'Play');
+  playBtn.title = playing ? 'Pause' : last ? 'Play again' : 'Play';
+  prevBtn.disabled = active === 0; nextBtn.disabled = last; restartBtn.disabled = active === 0;
+  player.setAttribute('aria-label', 'Book player, page ' + (active + 1) + ' of ' + P.length);
+}
+playBtn.addEventListener('click', () => playing ? pause() : play());
+prevBtn.addEventListener('click', () => step(-1));
+nextBtn.addEventListener('click', () => step(1));
+restartBtn.addEventListener('click', restart);
+joinWrap.querySelector('#again').addEventListener('click', restart);
+addEventListener('keydown', e => {
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  const onCtl = e.target.closest && e.target.closest('a,button');
+  if (e.key === ' ' || e.key === 'k') { if (onCtl && e.key === ' ') return; e.preventDefault(); playing ? pause() : play(); }
+  else if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === 'PageDown') { e.preventDefault(); step(1); }
+  else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'PageUp') { e.preventDefault(); step(-1); }
+  else if (e.key === 'Home') { e.preventDefault(); restart(); }
+});
+document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
+
+// ---- donut puddles: a tap leaves rings that spread and fade ----
+const rc = document.getElementById('ripples'), rx = rc.getContext('2d'); let rips = [];
+book.addEventListener('pointerdown', e => {
+  if (reduced || e.target.closest('a,button')) return;
+  rips.push({ x: e.clientX, y: e.clientY, t: performance.now(), light: P[active].light });
+});
+function frame(now) {
+  if (rips.length || rc.dataset.d) {
+    rx.clearRect(0, 0, vw, vh); rips = rips.filter(r => now - r.t < 2600);
+    for (const r of rips) { const a = (now - r.t) / 2600;
+      for (let k = 0; k < 3; k++) { const f = a - k * .13; if (f <= 0) continue;
+        rx.beginPath(); rx.arc(r.x, r.y, 8 + ease(clamp(f)) * (130 + k * 30), 0, 7);
+        rx.strokeStyle = (r.light ? 'rgba(255,255,255,' : 'rgba(35,31,32,') + (0.4 * (1 - clamp(f)) ** 2) + ')'; rx.lineWidth = 1.4; rx.stroke(); } }
+    rc.dataset.d = rips.length ? 1 : '';
+  }
+  // the ring around the play button fills across the whole book
+  const p = P[active], frac = playing && p.ms ? clamp(1 - (due - now) / p.ms) : p.ms ? clamp(1 - left / p.ms) : 1;
+  ring.style.strokeDashoffset = 150.8 * (1 - (active + frac) / P.length);
+  requestAnimationFrame(frame);
+}
+
+let rz = 0; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(layout, 120); });
+layout();
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(layout);
+// a reload in the same tab returns, paused, to the page you were on
+try { const k = sessionStorage.getItem('donut-page'); const j = k ? P.findIndex(p => p.key === k) : -1; if (j > 0) { started = true; show(j, true); } } catch (e) {}
+ui(); requestAnimationFrame(frame);
+})();
+</script>
+
+</body>
+</html>
